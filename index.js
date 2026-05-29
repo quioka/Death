@@ -5,12 +5,8 @@ require('dotenv').config({ silent: true });
 // ================= SERVIDOR FAKE PRO RENDER =================
 const app = express();
 const port = process.env.PORT || 3000;
-
 app.get('/', (req, res) => res.send('Bot da Giovanna está online e protegido! 💅'));
-
-app.listen(port, () => {
-    console.log(`💻 Servidor fake rodando na porta ${port} para o Render ficar feliz.`);
-});
+app.listen(port, () => console.log(`💻 Porta ${port} ativa.`));
 // ===============================================================
 
 const client = new Client({
@@ -22,14 +18,13 @@ const client = new Client({
     ]
 });
 
-// Links hackers/maliciosos que serão apagados
 const blacklistedLinks = [
     "1450205259426431007",
     "1461455444768985149"
 ];
 
 client.once('ready', () => {
-    console.log(`✅ Logada como ${client.user.tag}! Proteção ativa no Render.`);
+    console.log(`✅ Logada como ${client.user.tag}! Proteção ativa com timer de limpeza.`);
 });
 
 client.on('messageCreate', async (message) => {
@@ -39,32 +34,27 @@ client.on('messageCreate', async (message) => {
 
     if (containsBadLink) {
         try {
-            // 1. Apaga a mensagem com o link imediatamente
+            // 1. Apaga o link hacker na hora
             await message.delete();
             
-            // 2. Tenta banir o sem noção que mandou o link
+            // 2. Tenta banir o sapeca
             if (message.member && message.member.bannable) {
-                await message.member.ban({ reason: 'Envio de link malicioso/ataque hacker (Spam).' });
-                console.log(`🚫 ${message.author.tag} foi banido por spam.`);
-                
-                // 3. Manda a mensagem de deboche no canal onde o link foi enviado
-                await message.channel.send(`BEM FEITO, QUEM MANDA CLICAR EM LINK DE MÃES SOLTEIRAS 💅💀`);
-            } else {
-                console.log(`⚠️ Sem permissão para banir ${message.author.tag}.`);
-                // Mesmo se não puder banir (tipo se for admin), o bot avisa no chat
-                await message.channel.send(`⚠️ Eu deveria banir esse sapeca, mas não tenho permissão! Mas fica o aviso: QUEM MANDA CLICAR EM LINK DE MÃES SOLTEIRAS?`);
+                await message.member.ban({ reason: 'Link malicioso/Mães Solteiras.' });
             }
+
+            // 3. Manda a mensagem de deboche e salva ela numa variável
+            const aviso = await message.channel.send(`BEM FEITO, QUEM MANDA CLICAR EM LINK DE MÃES SOLTEIRAS 💅💀`);
+
+            // 4. ESPERA 7 SEGUNDOS E APAGA O DEBOCHE
+            setTimeout(() => {
+                aviso.delete().catch(err => console.log("Mensagem já tinha sido apagada ou erro ao apagar."));
+            }, 7000); // 7000 milissegundos = 7 segundos
+
         } catch (error) {
-            console.error('Erro na execução da punição:', error);
+            console.error('Erro na execução:', error);
         }
     }
 });
 
 const token = process.env.DISCORD_TOKEN;
-
-if (!token) {
-    console.error("❌ ERRO: A variável DISCORD_TOKEN não foi configurada no Render!");
-    process.exit(1);
-}
-
 client.login(token);
